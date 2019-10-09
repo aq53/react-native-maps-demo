@@ -16,6 +16,7 @@ import MapView, {
   Polygon
 } from "react-native-maps";
 import haversine from "haversine";
+import Geocoder from 'react-native-geocoding';
 
 const { height, width } = Dimensions.get("window");
 
@@ -27,6 +28,9 @@ const LATITUDE = 37.78825;
 const LONGITUDE = -122.4324;
 const LATITUDE_DELTA = 0.0922;
 const LONGITUDE_DELTA = 0.0421;
+
+
+Geocoder.init("AIzaSyDjn0Uytv_FSUwwpOUTVCvL4vKYU7Ev7VU"); // use a valid API key
 
 class AnimatedMarkers extends React.Component {
   constructor(props) {
@@ -49,6 +53,7 @@ class AnimatedMarkers extends React.Component {
   }
 
   componentWillMount() {
+
     navigator.geolocation.getCurrentPosition(
       position => {
         this.setState({ loading: false });
@@ -70,12 +75,19 @@ class AnimatedMarkers extends React.Component {
       position => {
         const { coordinate, routeCoordinates, distanceTravelled } = this.state;
         const { latitude, longitude } = position.coords;
-
+        console.log('position:',position)
         const newCoordinate = {
           latitude,
           longitude
         };
-
+        Geocoder.from({latitude:24.845446, longitude:67.001826})
+        .then(json => {
+            var location = json.results[0].geometry.location;
+            console.log('location:',json);
+        })
+        .catch(error => console.log('geocode location: error',error));
+    
+    
         if (Platform.OS === "android") {
           if (this.marker) {
             this.marker._component.animateMarkerToCoordinate(
@@ -97,7 +109,7 @@ class AnimatedMarkers extends React.Component {
         });
       },
       error => console.log(error),
-      { enableHighAccuracy: true, timeout: 20000, maximumAge: 1000 }
+      { enableHighAccuracy: false, timeout: 5000, maximumAge: 10000 }
     );
   }
 
@@ -131,6 +143,7 @@ class AnimatedMarkers extends React.Component {
       <View style={styles.container}>
         <MapView
           onRegionChange={region => {
+            console.log('region:',region)
             points.push(region);
           }}
           initialRegion={{
@@ -142,7 +155,7 @@ class AnimatedMarkers extends React.Component {
           style={styles.map}
           showsUserLocation
           followsUserLocation
-          provider={PROVIDER_GOOGLE}
+          // provider={PROVIDER_GOOGLE}
           loadingEnabled
           region={this.getMapRegion()}
         >
